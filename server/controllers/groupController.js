@@ -1,0 +1,95 @@
+import Group from "../models/Group.js";
+import ErrorResponse from "../utils/errorResponse.js";
+
+export const createGroup = async (req, res) => {
+  const { name, description } = req.body;
+
+  const group = await Group.create({
+    name,
+    description,
+    createdBy: req.user._id,
+    members: [req.user._id],
+  });
+
+  await group.populate('members', 'name email avatar');
+  await group.populate('createdBy', 'name email avatar');
+
+  res.status(201).json({ success: true, group });
+};
+
+export const getMyGroups = async (req, res) => {
+  const groups = await Group.find({ members: req.user._id })
+    .populate('members', 'name email avatar')
+    .populate('createdBy', 'name email avatar')
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({ success: true, count: groups.length, groups });
+};
+
+export const getGroupById = async (req, res) => {
+  const group = await Group.findById(req.params.id)
+    .populate('members', 'name email avatar')
+    .populate('createdBy', 'name email avatar');
+
+  if (!group) {
+    throw new ErrorResponse(`Group not found with id ${req.params.id}`, 404);
+  }
+
+  const isMember = group.members.some(
+    (member) => member._id.toString() === req.user._id.toString()
+  );
+
+  if (!isMember) {
+    throw new ErrorResponse('Not authorized to view this group', 403);
+  }
+
+  res.status(200).json({ success: true, group });
+};
+
+export const joinGroup = async (req, res) => {
+  const group = await Group.findOne({ inviteToken: req.params.inviteToken });
+
+  if (!group) {
+    throw new ErrorResponse('Invalid invite link', 404);
+  }
+
+  const alreadyMember = group.members.some(
+    (memberId) => memberId.toString() === req.user._id.toString()
+  );
+
+  if (alreadyMember) {
+    throw new ErrorResponse('You are already a member of this group', 400);
+  }
+
+  group.members.push(req.user._id);
+  await group.save();
+
+  await group.populate('members', 'name email avatar');
+  await group.populate('createdBy', 'name email avatar');
+
+  res.status(200).json({ success: true, message: 'Successfully joined the group', group });
+};
+
+export const updateGroup = async (req, res) => {
+  let group = await Group.findById(req.params.id);
+
+  if (!group) {
+    throw new ErrorResponse('Group not found', 404);
+  }
+
+  if (group.createdBy.toString() !== req.user._id.toString()) {
+    throw new ErrorResponse('Only group creator can update the group', 403);
+  }
+
+  const { name, description, status } = req.body;
+
+  group = await Group.findByIdAndUpdate(
+    req.params.id,
+    { name, description, status },
+    { new: true, runValidators: true }
+  )
+    .populate('members', 'name email avatar')
+    .populate('createdBy', 'name email avatar');
+
+  res.status(200).json({ success: true, group });
+};

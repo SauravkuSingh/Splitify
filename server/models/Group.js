@@ -41,12 +41,10 @@ const groupSchema = new mongoose.Schema({
   {
     timestamps: true,
   });
-//Invite token before joining group 
-groupSchema.pre('save',function(next){
-    if(this.inviteToken){
-        this.inviteToken = crypto.randomBytes(20).toString('hex');
-    }
-    next();
+groupSchema.pre('save', function() {
+  if(!this.inviteToken) { 
+    this.inviteToken = crypto.randomBytes(20).toString('hex');
+  }
 });
 //now export group model
 const Group = mongoose.model('Group', groupSchema);
