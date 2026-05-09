@@ -41,7 +41,7 @@ const groupSchema = new mongoose.Schema({
   {
     timestamps: true,
   });
-groupSchema.pre('save', function() {
+groupSchema.pre('save', async function() {
   if(!this.inviteToken) { 
     this.inviteToken = crypto.randomBytes(20).toString('hex');
   }
