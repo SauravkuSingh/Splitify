@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import settlementRoutes from "./routes/settlementRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 connectDB();
 
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/settlements', settlementRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -64,6 +66,12 @@ app.use((err, req, res, next) => {
   if (err.name === 'TokenExpiredError') {
     statusCode = 401;
     message = 'Token expired, please login again';
+  }
+
+  // Multer errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    statusCode = 400;
+    message = 'File size cannot exceed 5MB';
   }
 
   res.status(statusCode).json({
