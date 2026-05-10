@@ -6,6 +6,7 @@ import {
   updateExpense,
   deleteExpense,
   getGroupBalances,
+  getUserStats,
 } from '../controllers/expenseController.js';
 
 const router = express.Router();
@@ -16,6 +17,9 @@ router.use(protect);
 router.post('/', addExpense);
 router.put('/:id', updateExpense);
 router.delete('/:id', deleteExpense);
+
+// Stats and Analytics
+router.get('/stats', getUserStats);
 
 // Group specific routes
 router.get('/group/:groupId', getGroupExpenses);

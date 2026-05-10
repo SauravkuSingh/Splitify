@@ -9,7 +9,7 @@ import {
   Receipt
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export function AppSidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -35,9 +36,14 @@ export function AppSidebar() {
 
   const menuItems = [
     { title: "Dashboard", icon: LayoutDashboard, url: "/dashboard" },
-    { title: "My Groups", icon: Users, url: "/dashboard" },
-    { title: "Recent Activity", icon: History, url: "/dashboard" },
-    { title: "Analytics", icon: TrendingUp, url: "/dashboard" },
+    { title: "My Groups", icon: Users, url: "/groups" },
+    { title: "Recent Activity", icon: History, url: "/activity" },
+    { title: "Analytics", icon: TrendingUp, url: "/analytics" },
+  ];
+
+  const quickActions = [
+    { title: "Create Group", icon: PlusCircle, url: "/groups/new", color: "text-primary" },
+    { title: "Scan Receipt", icon: Receipt, url: "/scan", color: "text-gray-500" },
   ];
 
   return (
@@ -60,16 +66,26 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className="h-11 rounded-lg px-3 hover:bg-gray-50 transition-colors">
-                    <Link to={item.url} className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5 text-gray-500" />
-                      <span className="font-semibold text-sm">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {menuItems.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      className={`h-11 rounded-lg px-3 transition-all ${
+                        isActive 
+                          ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20' 
+                          : 'hover:bg-gray-50 text-gray-600'
+                      }`}
+                    >
+                      <Link to={item.url} className="flex items-center gap-3">
+                        <item.icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-gray-500'}`} />
+                        <span className={`text-sm ${isActive ? 'font-black' : 'font-semibold'}`}>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -80,20 +96,26 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="h-11 rounded-lg px-3 hover:bg-gray-50 transition-colors">
-                  <Link to="/groups/new" className="flex items-center gap-3">
-                    <PlusCircle className="w-5 h-5 text-primary" />
-                    <span className="font-semibold text-sm">Create Group</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton className="h-11 rounded-lg px-3 hover:bg-gray-50 transition-colors">
-                  <Receipt className="w-5 h-5 text-gray-500" />
-                  <span className="font-semibold text-sm">Scan Receipt</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {quickActions.map((item) => {
+                const isActive = location.pathname === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild 
+                      className={`h-11 rounded-lg px-3 transition-all ${
+                        isActive 
+                          ? 'bg-primary/10 text-primary shadow-sm ring-1 ring-primary/20' 
+                          : 'hover:bg-gray-50 text-gray-600'
+                      }`}
+                    >
+                      <Link to={item.url} className="flex items-center gap-3">
+                        <item.icon className={`w-5 h-5 ${isActive ? 'text-primary' : item.color}`} />
+                        <span className={`text-sm ${isActive ? 'font-black' : 'font-semibold'}`}>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -113,6 +135,7 @@ export function AppSidebar() {
           <button 
             onClick={handleLogout}
             className="p-2 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors group"
+            title="Log out"
           >
             <LogOut className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
           </button>

@@ -241,3 +241,72 @@ export const getGroupBalances = async (req, res) => {
     balances: balancesWithUserInfo,
   });
 };
+
+// ─── @route   GET /api/expenses/stats ─────────────────────────
+// ─── @access  Private ─────────────────────────────────────────
+
+export const getUserStats = async (req, res) => {
+  try {
+    // Find all groups user belongs to
+    const groups = await Group.find({ members: req.user._id });
+    const groupIds = groups.map(g => g._id);
+
+    // Find all expenses in those groups
+    const expenses = await Expense.find({ group: { $in: groupIds } }).populate('group', 'name');
+
+    // Aggregations
+    const groupStats = {};
+    const categoryStats = {
+      food: 0,
+      travel: 0,
+      accommodation: 0,
+      entertainment: 0,
+      shopping: 0,
+      utilities: 0,
+      medical: 0,
+      other: 0,
+    };
+
+    let totalSpentAcrossGroups = 0;
+
+    expenses.forEach(expense => {
+      // Group stats (Total spent in group)
+      if (expense.group) {
+        const gId = expense.group._id.toString();
+        const gName = expense.group.name;
+        if (!groupStats[gId]) {
+          groupStats[gId] = { name: gName, amount: 0 };
+        }
+        groupStats[gId].amount += expense.amount;
+      }
+
+      // Category stats (Total spent in category)
+      const cat = expense.category || 'other';
+      if (categoryStats.hasOwnProperty(cat)) {
+        categoryStats[cat] += expense.amount;
+      } else {
+        categoryStats.other += expense.amount;
+      }
+
+      totalSpentAcrossGroups += expense.amount;
+    });
+
+    // Convert to chart-friendly arrays
+    const spendingByGroup = Object.values(groupStats);
+    const spendingByCategory = Object.keys(categoryStats).map(cat => ({
+      name: cat.charAt(0).toUpperCase() + cat.slice(1),
+      value: categoryStats[cat]
+    })).filter(cat => cat.value > 0);
+
+    res.status(200).json({
+      success: true,
+      totalSpentAcrossGroups,
+      spendingByGroup,
+      spendingByCategory,
+      groupCount: groups.length,
+      expenseCount: expenses.length
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
