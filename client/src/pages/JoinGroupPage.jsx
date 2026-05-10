@@ -55,9 +55,7 @@ const JoinGroupPage = () => {
         {/* Logo Header */}
         <div className="flex flex-col items-center mb-10">
            <Link to="/" className="flex items-center gap-4 mb-4 group">
-              <div className="w-14 h-14 bg-primary rounded-[1.25rem] flex items-center justify-center shadow-2xl shadow-primary/30 group-hover:rotate-3 transition-transform">
-                <Sparkles className="w-8 h-8 text-white" />
-              </div>
+              <img src="/favicon.png" alt="Splitify Logo" className="w-14 h-14 group-hover:rotate-3 transition-transform drop-shadow-lg" />
               <h1 className="text-3xl font-black text-foreground tracking-tighter">Splitify</h1>
            </Link>
            <div className="h-1 w-12 bg-gray-100 rounded-full"></div>

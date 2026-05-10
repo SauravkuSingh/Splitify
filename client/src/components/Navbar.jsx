@@ -27,11 +27,7 @@ const Navbar = () => {
       <div className="container-centered h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md shadow-primary/10 group-hover:scale-105 transition-transform">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>
-            </svg>
-          </div>
+          <img src="/favicon.png" alt="Splitify Logo" className="w-8 h-8 group-hover:scale-105 transition-transform drop-shadow-sm" />
           <span className="text-lg font-bold tracking-tight text-foreground">Splitify</span>
         </Link>
 

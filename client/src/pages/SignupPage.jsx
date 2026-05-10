@@ -45,11 +45,7 @@ const SignupPage = () => {
         {/* Header Section */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center mx-auto shadow-lg shadow-primary/20 group-hover:scale-105 transition-all">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>
-              </svg>
-            </div>
+            <img src="/favicon.png" alt="Splitify Logo" className="w-10 h-10 mx-auto group-hover:scale-105 transition-all drop-shadow-md" />
             <span className="text-2xl font-black tracking-tighter text-foreground">Splitify</span>
           </Link>
           <h2 className="mt-8 text-2xl font-extrabold text-gray-900 tracking-tight">Join Splitify 🚀</h2>

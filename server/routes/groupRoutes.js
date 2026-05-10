@@ -7,6 +7,7 @@ import {
   joinGroup,
   updateGroup,
   deleteGroup,
+  getMyConnections
 } from '../controllers/groupController.js';
 
 const router = express.Router();
@@ -17,6 +18,8 @@ router.route('/')
   .get(protect, getMyGroups);
 
 router.post('/join/:inviteToken', protect, joinGroup);
+
+router.get('/connections', protect, getMyConnections);
 
 router.route('/:id')
   .get(protect, getGroupById)

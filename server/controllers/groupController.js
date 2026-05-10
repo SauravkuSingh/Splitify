@@ -26,6 +26,23 @@ export const getMyGroups = async (req, res) => {
   res.status(200).json({ success: true, count: groups.length, groups });
 };
 
+export const getMyConnections = async (req, res) => {
+  const groups = await Group.find({ members: req.user._id }).populate('members', 'name email avatar');
+  
+  const connectionsMap = new Map();
+  groups.forEach(group => {
+    group.members.forEach(member => {
+      // Don't include the current user
+      if (member._id.toString() !== req.user._id.toString()) {
+        connectionsMap.set(member._id.toString(), member);
+      }
+    });
+  });
+
+  const connections = Array.from(connectionsMap.values());
+  res.status(200).json({ success: true, count: connections.length, connections });
+};
+
 export const getGroupById = async (req, res) => {
   const group = await Group.findById(req.params.id)
     .populate('members', 'name email avatar')

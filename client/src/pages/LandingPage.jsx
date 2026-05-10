@@ -21,11 +21,7 @@ const LandingPage = () => {
       <header className="border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur-md z-50">
         <div className="container-centered h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/10 group-hover:scale-105 transition-transform">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" />
-              </svg>
-            </div>
+            <img src="/favicon.png" alt="Splitify Logo" className="w-9 h-9 group-hover:scale-105 transition-transform drop-shadow-md" />
             <span className="text-lg font-bold tracking-tight">Splitify</span>
           </Link>
           <nav className="flex items-center gap-6">
@@ -198,11 +194,7 @@ const LandingPage = () => {
       <footer className="py-12 bg-white border-t border-gray-100">
         <div className="container-centered flex flex-col sm:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-md shadow-primary/10">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3" />
-              </svg>
-            </div>
+            <img src="/favicon.svg" alt="Splitify Logo" className="w-8 h-8 drop-shadow-sm" />
             <span className="text-lg font-bold tracking-tight">Splitify</span>
           </div>
           <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">

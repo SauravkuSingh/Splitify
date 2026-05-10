@@ -8,8 +8,10 @@ import {
   TrendingUp,
   Receipt
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link, useLocation } from "react-router-dom";
+import api from "../utils/axios";
 import {
   Sidebar,
   SidebarContent,
@@ -28,6 +30,15 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [connections, setConnections] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      api.get('/groups/connections').then(res => {
+        setConnections(res.data.connections);
+      }).catch(err => console.error("Failed to fetch connections", err));
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -50,11 +61,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-gray-100 bg-white">
       <SidebarHeader className="p-6">
         <Link to="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-all">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>
-            </svg>
-          </div>
+          <img src="/favicon.png" alt="Splitify Logo" className="w-10 h-10 group-hover:scale-105 transition-all drop-shadow-md" />
           <span className="text-xl font-bold tracking-tight text-foreground">Splitify</span>
         </Link>
       </SidebarHeader>
@@ -117,6 +124,40 @@ export function AppSidebar() {
                 );
               })}
             </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-6">
+          <SidebarGroupLabel className="px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">
+            Connections
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            {connections.length === 0 ? (
+              <div className="px-3 py-4 text-xs text-center text-muted-foreground italic bg-gray-50/50 rounded-xl mx-2 border border-dashed border-gray-200">
+                No past members yet
+              </div>
+            ) : (
+              <SidebarMenu>
+                {connections.slice(0, 5).map((member) => (
+                  <SidebarMenuItem key={member._id}>
+                    <SidebarMenuButton 
+                      asChild 
+                      className="h-11 rounded-lg px-3 transition-all hover:bg-gray-50 text-gray-600 group"
+                    >
+                      <Link to="/groups/new" className="flex items-center gap-3 w-full">
+                        <Avatar className="w-6 h-6 border shadow-sm">
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
+                            {member.name.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-semibold truncate flex-1">{member.name}</span>
+                        <PlusCircle className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
