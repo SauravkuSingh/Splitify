@@ -1,89 +1,106 @@
-import { useState, useEffect, useRef } from 'react'
-import toast from 'react-hot-toast'
-import api from '../utils/axios'
+import { useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
+import api from '../utils/axios';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { 
+  X, 
+  Receipt, 
+  Search, 
+  IndianRupee, 
+  Users, 
+  Plus, 
+  FileText,
+  Utensils,
+  Plane,
+  Home,
+  Film,
+  ShoppingBag,
+  Zap,
+  Stethoscope,
+  MoreHorizontal,
+  Sparkles
+} from "lucide-react";
 
 const CATEGORIES = [
-  { value: 'food', label: '🍔 Food' },
-  { value: 'travel', label: '✈️ Travel' },
-  { value: 'accommodation', label: '🏨 Accommodation' },
-  { value: 'entertainment', label: '🎬 Entertainment' },
-  { value: 'shopping', label: '🛍️ Shopping' },
-  { value: 'utilities', label: '💡 Utilities' },
-  { value: 'medical', label: '💊 Medical' },
-  { value: 'other', label: '📦 Other' },
-]
+  { value: 'food', label: 'Food', icon: Utensils },
+  { value: 'travel', label: 'Travel', icon: Plane },
+  { value: 'accommodation', label: 'Stay', icon: Home },
+  { value: 'entertainment', label: 'Fun', icon: Film },
+  { value: 'shopping', label: 'Shop', icon: ShoppingBag },
+  { value: 'utilities', label: 'Bills', icon: Zap },
+  { value: 'medical', label: 'Health', icon: Stethoscope },
+  { value: 'other', label: 'Other', icon: MoreHorizontal },
+];
 
 const AddExpenseModal = ({ group, currentUser, onClose, onExpenseAdded }) => {
   const [form, setForm] = useState({
     title: '',
     amount: '',
     paidBy: currentUser._id,
-    splitBetween: group.members.map(m => m._id), // default: sab selected
+    splitBetween: group.members.map(m => m._id),
     splitType: 'equal',
-    category: 'other',
+    category: 'food',
     notes: '',
-  })
-  const [loading, setLoading] = useState(false)
-  const [scanning, setScanning] = useState(false)
-  const [scannedData, setScannedData] = useState(null)
-  const fileInputRef = useRef(null)
+  });
+  const [loading, setLoading] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scannedData, setScannedData] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // Equal split mein per-person amount calculate karo
   const perPersonAmount = form.splitType === 'equal' && form.amount && form.splitBetween.length > 0
     ? (parseFloat(form.amount) / form.splitBetween.length).toFixed(2)
-    : 0
+    : 0;
 
-  // Member select/deselect toggle
   const toggleMember = (memberId) => {
     setForm(prev => ({
       ...prev,
       splitBetween: prev.splitBetween.includes(memberId)
         ? prev.splitBetween.filter(id => id !== memberId)
         : [...prev.splitBetween, memberId]
-    }))
-  }
+    }));
+  };
 
-  // AI Receipt Scan
   const handleReceiptScan = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+    const file = e.target.files[0];
+    if (!file) return;
 
-    setScanning(true)
-    const formData = new FormData()
-    formData.append('receipt', file)
+    setScanning(true);
+    const formData = new FormData();
+    formData.append('receipt', file);
 
     try {
       const res = await api.post('/ai/scan-receipt', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
-      })
+      });
 
       if (res.data.scanned && res.data.receipt) {
-        const { total, storeName } = res.data.receipt
+        const { total, storeName, category } = res.data.receipt;
         setForm(prev => ({
           ...prev,
           amount: total?.toString() || prev.amount,
           title: storeName || prev.title,
-        }))
-        setScannedData(res.data.receipt)
-        toast.success('Receipt scanned! Amount auto-filled ✨')
+          category: category?.toLowerCase() || prev.category
+        }));
+        setScannedData(res.data.receipt);
+        toast.success('Receipt scanned successfully! ✨');
       } else {
-        toast.error('Could not read receipt. Please enter manually.')
+        toast.error('Could not read receipt details.');
       }
     } catch (err) {
-      toast.error('Scan failed. Try again.')
+      toast.error('Scan failed. Please enter manually.');
     } finally {
-      setScanning(false)
+      setScanning(false);
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
+    if (!form.title.trim()) return toast.error('Please enter a description');
+    if (!form.amount || parseFloat(form.amount) <= 0) return toast.error('Enter a valid amount');
+    if (form.splitBetween.length === 0) return toast.error('Select at least one member');
 
-    if (!form.title.trim()) return toast.error('Please add a title')
-    if (!form.amount || parseFloat(form.amount) <= 0) return toast.error('Enter a valid amount')
-    if (form.splitBetween.length === 0) return toast.error('Select at least one person to split with')
-
-    setLoading(true)
+    setLoading(true);
     try {
       await api.post('/expenses', {
         groupId: group._id,
@@ -94,256 +111,203 @@ const AddExpenseModal = ({ group, currentUser, onClose, onExpenseAdded }) => {
         splitType: form.splitType,
         category: form.category,
         notes: form.notes,
-      })
+      });
 
-      toast.success('Expense added! 💸')
-      onExpenseAdded() // Parent mein refresh trigger
-      onClose()
+      toast.success('Expense added to group! 💸');
+      onExpenseAdded();
+      onClose();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add expense')
+      toast.error(err.response?.data?.message || 'Failed to add expense');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
-  // Backdrop click se close
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) onClose()
-  }
+  };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl max-h-[92vh] overflow-y-auto">
-
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+      <div 
+        className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden relative flex flex-col max-h-[90vh]"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="sticky top-0 bg-white px-6 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between z-10">
-          <h2 className="text-lg font-semibold text-gray-900">Add expense</h2>
-          <button
+        <div className="px-8 pt-8 pb-6 border-b border-gray-50 flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-foreground tracking-tight">Add Expense</h2>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Split smarter with Splitify</p>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
+            className="rounded-full bg-gray-50 hover:bg-gray-100 h-10 w-10"
           >
-            ✕
-          </button>
+            <X className="w-5 h-5" />
+          </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
-
-          {/* AI Receipt Scan Button */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8 scrollbar-hide">
+          
+          {/* AI Scan Action */}
           <div>
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={handleReceiptScan}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={scanning}
-              className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-orange-200 text-orange-500 py-3 rounded-2xl text-sm font-medium hover:bg-orange-50 transition-colors disabled:opacity-60"
-            >
-              {scanning ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-orange-300 border-t-orange-500 rounded-full animate-spin"></div>
-                  Scanning receipt...
-                </>
-              ) : (
-                <>📷 Scan receipt with AI</>
-              )}
-            </button>
+             <input type="file" accept="image/*" ref={fileInputRef} onChange={handleReceiptScan} className="hidden" />
+             <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={scanning}
+                className="w-full group relative overflow-hidden bg-primary/5 border border-primary/10 rounded-2xl p-4 flex items-center justify-center gap-3 transition-all hover:bg-primary/10"
+             >
+                <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full -mr-12 -mt-12 blur-2xl group-hover:scale-150 transition-all"></div>
+                {scanning ? (
+                  <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+                ) : (
+                  <Receipt className="w-5 h-5 text-primary" />
+                )}
+                <span className="text-xs font-black text-primary uppercase tracking-widest">
+                  {scanning ? 'AI is analyzing...' : 'Scan receipt with AI'}
+                </span>
+             </button>
+          </div>
 
-            {/* Scanned data preview */}
-            {scannedData && (
-              <div className="mt-3 bg-orange-50 rounded-2xl p-3 border border-orange-100">
-                <p className="text-xs font-semibold text-orange-600 mb-2">✨ AI extracted:</p>
-                <div className="space-y-1">
-                  {scannedData.items?.slice(0, 3).map((item, i) => (
-                    <div key={i} className="flex justify-between text-xs text-gray-600">
-                      <span>{item.name}</span>
-                      <span className="font-medium">₹{item.price}</span>
-                    </div>
-                  ))}
-                  {scannedData.items?.length > 3 && (
-                    <p className="text-xs text-gray-400">+{scannedData.items.length - 3} more items</p>
-                  )}
-                  <div className="flex justify-between text-xs font-bold text-gray-900 pt-1 border-t border-orange-200">
-                    <span>Total</span>
-                    <span>₹{scannedData.total}</span>
-                  </div>
-                </div>
+          {/* Title & Amount */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">What was it for?</label>
+              <div className="relative">
+                <FileText className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="e.g. Dinner at Taj"
+                  value={form.title}
+                  onChange={e => setForm({...form, title: e.target.value})}
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
               </div>
-            )}
-          </div>
-
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">What was it for?</label>
-            <input
-              type="text"
-              placeholder="Hotel stay, dinner, cab..."
-              value={form.title}
-              onChange={e => setForm({...form, title: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
-              required
-            />
-          </div>
-
-          {/* Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Total amount</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-              <input
-                type="number"
-                placeholder="0.00"
-                value={form.amount}
-                onChange={e => setForm({...form, amount: e.target.value})}
-                min="0.01"
-                step="0.01"
-                className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
-                required
-              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Total amount</label>
+              <div className="relative">
+                <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
+                <input
+                  type="number"
+                  placeholder="0.00"
+                  value={form.amount}
+                  onChange={e => setForm({...form, amount: e.target.value})}
+                  className="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-gray-100 bg-gray-50/50 text-sm font-black focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Paid by */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Paid by</label>
-            <select
-              value={form.paidBy}
-              onChange={e => setForm({...form, paidBy: e.target.value})}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all bg-white"
-            >
-              {group.members.map(member => (
-                <option key={member._id} value={member._id}>
-                  {member._id === currentUser._id ? `${member.name} (you)` : member.name}
-                </option>
-              ))}
-            </select>
+          {/* Paid By */}
+          <div className="space-y-3">
+             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Paid by</label>
+             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {group.members.map(member => (
+                  <button
+                    key={member._id}
+                    type="button"
+                    onClick={() => setForm({...form, paidBy: member._id})}
+                    className={`flex items-center gap-2 p-2 rounded-xl border transition-all ${
+                      form.paidBy === member._id 
+                        ? 'bg-primary/5 border-primary shadow-sm' 
+                        : 'bg-white border-gray-100 hover:border-gray-200'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
+                      form.paidBy === member._id ? 'bg-primary text-white' : 'bg-gray-100 text-muted-foreground'
+                    }`}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="text-[11px] font-bold truncate">
+                       {member._id === currentUser._id ? 'You' : member.name.split(' ')[0]}
+                    </span>
+                  </button>
+                ))}
+             </div>
           </div>
 
           {/* Category */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Category</label>
             <div className="grid grid-cols-4 gap-2">
-              {CATEGORIES.map(cat => (
-                <button
-                  key={cat.value}
-                  type="button"
-                  onClick={() => setForm({...form, category: cat.value})}
-                  className={`py-2 px-1 rounded-xl text-xs font-medium transition-all border ${
-                    form.category === cat.value
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'bg-gray-50 text-gray-600 border-gray-100 hover:border-orange-200'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
+              {CATEGORIES.map(cat => {
+                const Icon = cat.icon;
+                return (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setForm({...form, category: cat.value})}
+                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all ${
+                      form.category === cat.value
+                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
+                        : 'bg-white text-muted-foreground border-gray-100 hover:border-primary/30'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 mb-1.5" />
+                    <span className="text-[9px] font-black uppercase tracking-tighter">{cat.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Split type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Split type</label>
-            <div className="flex gap-2">
-              {['equal', 'custom', 'percentage'].map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setForm({...form, splitType: type})}
-                  className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all border capitalize ${
-                    form.splitType === type
-                      ? 'bg-orange-500 text-white border-orange-500'
-                      : 'bg-gray-50 text-gray-600 border-gray-100 hover:border-orange-200'
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Split between — member checkboxes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Split between
-              {form.splitType === 'equal' && form.amount && (
-                <span className="text-orange-500 ml-2 font-normal">
-                  ₹{perPersonAmount} each
-                </span>
+          {/* Split Settings */}
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Split between</label>
+              {form.splitType === 'equal' && form.amount > 0 && (
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest">₹{perPersonAmount} each</span>
               )}
-            </label>
+            </div>
             <div className="space-y-2">
               {group.members.map(member => {
-                const isSelected = form.splitBetween.includes(member._id)
+                const isSelected = form.splitBetween.includes(member._id);
                 return (
                   <button
                     key={member._id}
                     type="button"
                     onClick={() => toggleMember(member._id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                      isSelected
-                        ? 'bg-orange-50 border-orange-200'
-                        : 'bg-gray-50 border-gray-100'
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                      isSelected ? 'bg-primary/5 border-primary/20' : 'bg-gray-50/50 border-transparent'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                        isSelected ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${
+                        isSelected ? 'bg-primary text-white shadow-lg' : 'bg-gray-200 text-muted-foreground'
                       }`}>
                         {member.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="text-sm font-medium text-gray-800">
-                        {member._id === currentUser._id ? `${member.name} (you)` : member.name}
+                      <span className="text-sm font-bold text-foreground">
+                        {member._id === currentUser._id ? `${member.name} (You)` : member.name}
                       </span>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      isSelected ? 'bg-orange-500 border-orange-500' : 'border-gray-300'
+                    <div className={`w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${
+                      isSelected ? 'bg-primary border-primary' : 'border-gray-300'
                     }`}>
-                      {isSelected && (
-                        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-                          <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                        </svg>
-                      )}
+                       {isSelected && <Plus className="w-3 h-3 text-white rotate-45" />}
                     </div>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
 
-          {/* Notes */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Notes <span className="text-gray-300 font-normal">(optional)</span>
-            </label>
-            <textarea
-              placeholder="Any details..."
-              value={form.notes}
-              onChange={e => setForm({...form, notes: e.target.value})}
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all resize-none"
-            />
-          </div>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-orange-500 text-white py-4 rounded-2xl font-semibold hover:bg-orange-600 transition-colors disabled:opacity-60 text-base"
-          >
-            {loading ? 'Adding...' : 'Add expense'}
-          </button>
-
         </form>
+
+        {/* Footer Action */}
+        <div className="p-8 border-t border-gray-50 bg-gray-50/30">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={loading}
+            rounded="full"
+            className="w-full h-14 font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
+          >
+            {loading ? 'Processing...' : 'Add Expense Now'}
+          </Button>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AddExpenseModal
+export default AddExpenseModal;

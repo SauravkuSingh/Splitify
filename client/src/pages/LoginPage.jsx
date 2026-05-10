@@ -19,7 +19,15 @@ const LoginPage = () => {
     setLoading(true);
     try {
       await login(form.email, form.password);
-      navigate('/dashboard');
+      
+      // Check for pending invite
+      const pendingInvite = localStorage.getItem('splitify_pending_invite');
+      if (pendingInvite) {
+        localStorage.removeItem('splitify_pending_invite');
+        navigate(`/join/${pendingInvite}`);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {

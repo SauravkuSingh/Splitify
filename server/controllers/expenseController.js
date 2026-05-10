@@ -4,38 +4,68 @@ import ErrorResponse from '../utils/errorResponse.js';
 
 // @route   POST /api/expenses
 export const addExpense = async (req, res) => {
-  const { description, title, amount, category, group, groupId, splitType, receiptUrl, receiptImage, splitBetween } = req.body;
+  try {
+    const { 
+      description, 
+      title, 
+      amount, 
+      category, 
+      group, 
+      groupId, 
+      splitType, 
+      receiptUrl, 
+      receiptImage, 
+      splitBetween 
+    } = req.body;
 
-  // Handle both naming conventions for compatibility
-  const finalTitle = title || description;
-  const finalGroupId = groupId || group;
-  const finalReceipt = receiptImage || receiptUrl;
+    const finalTitle = title || description;
+    const finalGroupId = groupId || group;
+    const finalReceipt = receiptImage || receiptUrl;
 
-  // If splitBetween is not provided, default to equal split among all group members
-  let finalSplitBetween = splitBetween;
-  if (!finalSplitBetween) {
+    if (!finalGroupId) throw new ErrorResponse('Group ID is required', 400);
+    if (!amount) throw new ErrorResponse('Amount is required', 400);
+
     const groupDoc = await Group.findById(finalGroupId);
     if (!groupDoc) throw new ErrorResponse('Group not found', 404);
-    
-    const share = amount / groupDoc.members.length;
-    finalSplitBetween = groupDoc.members.map(mId => ({
-      user: mId,
-      share: share
-    }));
+
+    let finalSplitBetween = [];
+
+    // Case 1: splitBetween is an array of IDs (strings)
+    if (Array.isArray(splitBetween) && splitBetween.length > 0 && typeof splitBetween[0] === 'string') {
+      const share = amount / splitBetween.length;
+      finalSplitBetween = splitBetween.map(userId => ({
+        user: userId,
+        share: parseFloat(share.toFixed(2))
+      }));
+    } 
+    // Case 2: splitBetween is already formatted as objects
+    else if (Array.isArray(splitBetween) && splitBetween.length > 0 && typeof splitBetween[0] === 'object') {
+      finalSplitBetween = splitBetween;
+    }
+    // Case 3: splitBetween is missing - default to all group members
+    else {
+      const share = amount / groupDoc.members.length;
+      finalSplitBetween = groupDoc.members.map(mId => ({
+        user: mId,
+        share: parseFloat(share.toFixed(2))
+      }));
+    }
+
+    const expense = await Expense.create({
+      title: finalTitle,
+      amount,
+      category: category || 'other',
+      groupId: finalGroupId,
+      paidBy: req.user._id,
+      splitType: splitType || 'equal',
+      receiptImage: finalReceipt,
+      splitBetween: finalSplitBetween
+    });
+
+    res.status(201).json({ success: true, expense });
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ success: false, message: err.message });
   }
-
-  const expense = await Expense.create({
-    title: finalTitle,
-    amount,
-    category,
-    groupId: finalGroupId,
-    paidBy: req.user._id,
-    splitType,
-    receiptImage: finalReceipt,
-    splitBetween: finalSplitBetween
-  });
-
-  res.status(201).json({ success: true, expense });
 };
 
 // @route   GET /api/expenses/group/:groupId
@@ -113,7 +143,6 @@ export const getGroupBalances = async (req, res) => {
       balances[payerId].paid += exp.amount;
     }
 
-    // Use splitBetween if available, otherwise fallback to equal
     if (exp.splitBetween && exp.splitBetween.length > 0) {
       exp.splitBetween.forEach(split => {
         const userId = split.user.toString();

@@ -23,7 +23,15 @@ const SignupPage = () => {
     setLoading(true);
     try {
       await signup(form.name, form.email, form.password);
-      navigate('/dashboard');
+      
+      // Check for pending invite
+      const pendingInvite = localStorage.getItem('splitify_pending_invite');
+      if (pendingInvite) {
+        localStorage.removeItem('splitify_pending_invite');
+        navigate(`/join/${pendingInvite}`);
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
