@@ -34,7 +34,18 @@ export const getMyConnections = async (req, res) => {
     group.members.forEach(member => {
       // Don't include the current user
       if (member._id.toString() !== req.user._id.toString()) {
-        connectionsMap.set(member._id.toString(), member);
+        const id = member._id.toString();
+        if (!connectionsMap.has(id)) {
+          connectionsMap.set(id, {
+            user: member,
+            sharedGroups: [group.name]
+          });
+        } else {
+          const existing = connectionsMap.get(id);
+          if (!existing.sharedGroups.includes(group.name)) {
+            existing.sharedGroups.push(group.name);
+          }
+        }
       }
     });
   });
@@ -109,6 +120,43 @@ export const updateGroup = async (req, res) => {
     .populate('createdBy', 'name email avatar');
 
   res.status(200).json({ success: true, group });
+};
+
+export const addMember = async (req, res) => {
+  const group = await Group.findById(req.params.id);
+
+  if (!group) {
+    throw new ErrorResponse('Group not found', 404);
+  }
+
+  const isMember = group.members.some(
+    (memberId) => memberId.toString() === req.user._id.toString()
+  );
+
+  if (!isMember) {
+    throw new ErrorResponse('Not authorized to add members to this group', 403);
+  }
+
+  const { userId } = req.body;
+  if (!userId) {
+    throw new ErrorResponse('User ID is required', 400);
+  }
+
+  const alreadyMember = group.members.some(
+    (memberId) => memberId.toString() === userId
+  );
+
+  if (alreadyMember) {
+    throw new ErrorResponse('User is already a member of this group', 400);
+  }
+
+  group.members.push(userId);
+  await group.save();
+
+  await group.populate('members', 'name email avatar');
+  await group.populate('createdBy', 'name email avatar');
+
+  res.status(200).json({ success: true, message: 'Member added successfully', group });
 };
 
 export const deleteGroup = async (req, res) => {

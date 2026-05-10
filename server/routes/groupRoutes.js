@@ -7,7 +7,8 @@ import {
   joinGroup,
   updateGroup,
   deleteGroup,
-  getMyConnections
+  getMyConnections,
+  addMember
 } from '../controllers/groupController.js';
 
 const router = express.Router();
@@ -25,5 +26,7 @@ router.route('/:id')
   .get(protect, getGroupById)
   .put(protect, updateGroup)
   .delete(protect, deleteGroup);
+
+router.post('/:id/members', protect, addMember);
 
 export default router;

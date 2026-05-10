@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import ExpenseCard from '../components/ExpenseCard';
 import BalanceCard from '../components/BalanceCard';
 import AddExpenseModal from '../components/AddExpenseModal';
+import { AddMemberModal } from "../components/AddMemberModal";
 import { GroupDetailSkeleton } from '../components/Skeleton';
 import { MainLayout } from "@/components/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ const GroupDetailPage = () => {
   const [copied, setCopied] = useState(false);
   const [runningAlgo, setRunningAlgo] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
 
   useEffect(() => { fetchAll(); }, [id]);
 
@@ -214,7 +216,7 @@ const GroupDetailPage = () => {
                   
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-6">
                     <div className="flex items-center gap-3">
-                      <div className="flex -space-x-2.5">
+                      <div className="flex -space-x-2.5 items-center">
                         {group.members?.slice(0, 5).map((member, i) => (
                           <div
                             key={member._id}
@@ -226,10 +228,17 @@ const GroupDetailPage = () => {
                           </div>
                         ))}
                         {group.members?.length > 5 && (
-                          <div className="w-9 h-9 rounded-full bg-gray-50 border-2 border-white flex items-center justify-center text-[10px] text-muted-foreground font-black z-0 shadow-sm">
+                          <div className="w-9 h-9 rounded-full bg-gray-50 border-2 border-white flex items-center justify-center text-[10px] text-muted-foreground font-black z-0 shadow-sm" style={{ zIndex: 0 }}>
                             +{group.members.length - 5}
                           </div>
                         )}
+                        <button 
+                          onClick={() => setIsAddMemberModalOpen(true)}
+                          className="w-9 h-9 rounded-full bg-primary/10 border-2 border-white flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors z-0 shadow-sm ml-2 relative"
+                          title="Add Member"
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
                       </div>
                       <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-2">
                         {group.members?.length} Members
@@ -306,18 +315,18 @@ const GroupDetailPage = () => {
 
         {/* Main Content Area with Tabs */}
         <Tabs defaultValue="expenses" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="w-full max-w-lg mx-auto bg-white border border-gray-100 p-1.5 rounded-2xl h-14 mb-12 shadow-sm">
-            <TabsTrigger value="expenses" className="flex-1 rounded-xl font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
-              <Receipt className="w-4 h-4" />
+          <TabsList className="flex w-full overflow-x-auto hide-scrollbar max-w-lg mx-auto bg-white border border-gray-100 p-1.5 rounded-2xl h-auto min-h-[56px] mb-12 shadow-sm">
+            <TabsTrigger value="expenses" className="flex-1 min-w-[110px] whitespace-nowrap rounded-xl font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+              <Receipt className="w-4 h-4 shrink-0" />
               Expenses
               {expenses.length > 0 && <Badge className="ml-1 bg-white/20 text-[9px] h-5 min-w-[20px] font-black">{expenses.length}</Badge>}
             </TabsTrigger>
-            <TabsTrigger value="balances" className="flex-1 rounded-xl font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
-              <Scale className="w-4 h-4" />
+            <TabsTrigger value="balances" className="flex-1 min-w-[110px] whitespace-nowrap rounded-xl font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+              <Scale className="w-4 h-4 shrink-0" />
               Balances
             </TabsTrigger>
-            <TabsTrigger value="settlements" className="flex-1 rounded-xl font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
-              <History className="w-4 h-4" />
+            <TabsTrigger value="settlements" className="flex-1 min-w-[110px] whitespace-nowrap rounded-xl font-bold text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+              <History className="w-4 h-4 shrink-0" />
               Settlements
               {pendingSettlements.length > 0 && <Badge className="ml-1 bg-white/20 text-[9px] h-5 min-w-[20px] font-black">{pendingSettlements.length}</Badge>}
             </TabsTrigger>
@@ -482,6 +491,16 @@ const GroupDetailPage = () => {
           currentUser={user}
           onClose={() => setShowAddExpense(false)}
           onExpenseAdded={handleExpenseAdded}
+        />
+      )}
+
+      {isAddMemberModalOpen && (
+        <AddMemberModal
+          isOpen={isAddMemberModalOpen}
+          onClose={() => setIsAddMemberModalOpen(false)}
+          groupId={group?._id}
+          currentMembers={group?.members || []}
+          onMemberAdded={fetchAll}
         />
       )}
     </MainLayout>

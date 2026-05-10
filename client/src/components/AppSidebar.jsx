@@ -138,20 +138,26 @@ export function AppSidebar() {
               </div>
             ) : (
               <SidebarMenu>
-                {connections.slice(0, 5).map((member) => (
-                  <SidebarMenuItem key={member._id}>
+                {connections.slice(0, 5).map((connection) => (
+                  <SidebarMenuItem key={connection.user._id}>
                     <SidebarMenuButton 
                       asChild 
-                      className="h-11 rounded-lg px-3 transition-all hover:bg-gray-50 text-gray-600 group"
+                      className="h-auto py-2 rounded-lg px-3 transition-all hover:bg-gray-50 text-gray-600 group"
                     >
                       <Link to="/groups/new" className="flex items-center gap-3 w-full">
-                        <Avatar className="w-6 h-6 border shadow-sm">
-                          <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-                            {member.name.charAt(0).toUpperCase()}
+                        <Avatar className="w-8 h-8 border shadow-sm">
+                          <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                            {connection.user.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm font-semibold truncate flex-1">{member.name}</span>
-                        <PlusCircle className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all" />
+                        <div className="flex flex-col flex-1 overflow-hidden">
+                          <span className="text-sm font-semibold truncate">{connection.user.name}</span>
+                          <span className="text-[10px] text-muted-foreground truncate">
+                            {connection.sharedGroups.slice(0, 2).join(', ')}
+                            {connection.sharedGroups.length > 2 && '...'}
+                          </span>
+                        </div>
+                        <PlusCircle className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 group-hover:text-primary transition-all shrink-0" />
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
