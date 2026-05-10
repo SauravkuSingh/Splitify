@@ -15,7 +15,8 @@ export const addExpense = async (req, res) => {
       splitType, 
       receiptUrl, 
       receiptImage, 
-      splitBetween 
+      splitBetween,
+      paidBy
     } = req.body;
 
     const finalTitle = title || description;
@@ -56,7 +57,7 @@ export const addExpense = async (req, res) => {
       amount,
       category: category || 'other',
       groupId: finalGroupId,
-      paidBy: req.user._id,
+      paidBy: paidBy || req.user._id,
       splitType: splitType || 'equal',
       receiptImage: finalReceipt,
       splitBetween: finalSplitBetween
