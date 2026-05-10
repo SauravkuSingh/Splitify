@@ -1,4 +1,5 @@
 import Group from "../models/Group.js";
+import User from "../models/User.js";
 import ErrorResponse from "../utils/errorResponse.js";
 
 export const createGroup = async (req, res) => {
@@ -20,6 +21,17 @@ export const createGroup = async (req, res) => {
     members: memberIds,
   });
 
+  // Cross-add all members to each other's connections list permanently
+  if (memberIds.length > 1) {
+    for (const mId of memberIds) {
+      await User.findByIdAndUpdate(mId, {
+        $addToSet: { 
+          connections: { $each: memberIds.filter(id => id.toString() !== mId.toString()) } 
+        }
+      });
+    }
+  }
+
   await group.populate('members', 'name email avatar');
   await group.populate('createdBy', 'name email avatar');
 
@@ -36,12 +48,28 @@ export const getMyGroups = async (req, res) => {
 };
 
 export const getMyConnections = async (req, res) => {
+  // 1. Get active groups to see shared groups context
   const groups = await Group.find({ members: req.user._id }).populate('members', 'name email avatar');
   
+  // 2. Get permanent connections from User model
+  const user = await User.findById(req.user._id).populate('connections', 'name email avatar');
+  
   const connectionsMap = new Map();
+
+  // Add from permanent connections first
+  if (user && user.connections) {
+    user.connections.forEach(member => {
+      const id = member._id.toString();
+      connectionsMap.set(id, {
+        user: member,
+        sharedGroups: []
+      });
+    });
+  }
+
+  // Update with active shared groups
   groups.forEach(group => {
     group.members.forEach(member => {
-      // Don't include the current user
       if (member._id.toString() !== req.user._id.toString()) {
         const id = member._id.toString();
         if (!connectionsMap.has(id)) {
@@ -57,6 +85,13 @@ export const getMyConnections = async (req, res) => {
         }
       }
     });
+  });
+
+  // Mark connections that have no active shared groups
+  connectionsMap.forEach(conn => {
+    if (conn.sharedGroups.length === 0) {
+      conn.sharedGroups.push('Past Groups');
+    }
   });
 
   const connections = Array.from(connectionsMap.values());
@@ -100,6 +135,17 @@ export const joinGroup = async (req, res) => {
 
   group.members.push(req.user._id);
   await group.save();
+
+  // Cross-add all members to each other's connections list permanently
+  if (group.members.length > 1) {
+    for (const mId of group.members) {
+      await User.findByIdAndUpdate(mId, {
+        $addToSet: { 
+          connections: { $each: group.members.filter(id => id.toString() !== mId.toString()) } 
+        }
+      });
+    }
+  }
 
   await group.populate('members', 'name email avatar');
   await group.populate('createdBy', 'name email avatar');
@@ -161,6 +207,17 @@ export const addMember = async (req, res) => {
 
   group.members.push(userId);
   await group.save();
+
+  // Cross-add all members to each other's connections list permanently
+  if (group.members.length > 1) {
+    for (const mId of group.members) {
+      await User.findByIdAndUpdate(mId, {
+        $addToSet: { 
+          connections: { $each: group.members.filter(id => id.toString() !== mId.toString()) } 
+        }
+      });
+    }
+  }
 
   await group.populate('members', 'name email avatar');
   await group.populate('createdBy', 'name email avatar');
