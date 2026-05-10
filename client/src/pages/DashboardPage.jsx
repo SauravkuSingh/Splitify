@@ -5,6 +5,7 @@ import GroupCard from '../components/GroupCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { Link } from 'react-router-dom';
 import DashboardCharts from "@/components/DashboardCharts";
 import { MainLayout } from "@/components/MainLayout";
@@ -63,6 +64,30 @@ const DashboardPage = () => {
           {error}
         </div>
       )}
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <Card className="bg-white border-gray-100 shadow-sm rounded-[2rem] p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:scale-150 transition-all"></div>
+          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-3">Total Volume</p>
+          <p className="text-2xl font-black text-foreground tracking-tighter">₹{stats?.totalGroupVolume?.toLocaleString() || 0}</p>
+        </Card>
+        <Card className="bg-white border-gray-100 shadow-sm rounded-[2rem] p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:scale-150 transition-all"></div>
+          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-3">You Paid</p>
+          <p className="text-2xl font-black text-blue-600 tracking-tighter">₹{stats?.userPaidTotal?.toLocaleString() || 0}</p>
+        </Card>
+        <Card className="bg-white border-gray-100 shadow-sm rounded-[2rem] p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:scale-150 transition-all"></div>
+          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-3">Groups</p>
+          <p className="text-2xl font-black text-foreground tracking-tighter">{stats?.groupCount || 0}</p>
+        </Card>
+        <Card className="bg-white border-gray-100 shadow-sm rounded-[2rem] p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/5 rounded-full -mr-12 -mt-12 blur-2xl group-hover:scale-150 transition-all"></div>
+          <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mb-3">Expenses</p>
+          <p className="text-2xl font-black text-foreground tracking-tighter">{stats?.expenseCount || 0}</p>
+        </Card>
+      </div>
 
       {/* Stats & Charts Section */}
       <DashboardCharts stats={stats} />

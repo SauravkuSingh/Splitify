@@ -93,3 +93,29 @@ export const updateGroup = async (req, res) => {
 
   res.status(200).json({ success: true, group });
 };
+
+export const deleteGroup = async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+
+    if (!group) {
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    // Only creator can delete
+    if (group.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Only group creator can delete this group' });
+    }
+
+    // Use findByIdAndDelete to ensure it works across Mongoose versions
+    await Group.findByIdAndDelete(req.params.id);
+
+    // Optional: Clean up related data if needed
+    // await Expense.deleteMany({ groupId: req.params.id });
+    // await Settlement.deleteMany({ groupId: req.params.id });
+
+    res.status(200).json({ success: true, message: 'Group deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
