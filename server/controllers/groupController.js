@@ -2,13 +2,22 @@ import Group from "../models/Group.js";
 import ErrorResponse from "../utils/errorResponse.js";
 
 export const createGroup = async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, members } = req.body;
+
+  const memberIds = [req.user._id];
+  if (members && Array.isArray(members)) {
+    members.forEach(id => {
+      if (id !== req.user._id.toString()) {
+        memberIds.push(id);
+      }
+    });
+  }
 
   const group = await Group.create({
     name,
     description,
     createdBy: req.user._id,
-    members: [req.user._id],
+    members: memberIds,
   });
 
   await group.populate('members', 'name email avatar');
