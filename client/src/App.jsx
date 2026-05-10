@@ -11,6 +11,7 @@ import MyGroupsPage from './pages/MyGroupsPage';
 import RecentActivityPage from './pages/RecentActivityPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import ScanReceiptPage from './pages/ScanReceiptPage';
+import JoinGroupPage from './pages/JoinGroupPage';
 import LoadingSpinner from './components/LoadingSpinner';
 
 // Protected route
@@ -33,6 +34,7 @@ const AppRoutes = () => (
     <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
     <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
+    <Route path="/join/:inviteToken" element={<JoinGroupPage />} />
 
     {/* Protected */}
     <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
